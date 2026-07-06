@@ -1,6 +1,6 @@
 // ============================================
-// 多功能生成器 (Multifunction Generator) v4.7.1
-// 发行定位: 严谨专业·图鉴与事件生成引擎 (修复历史记录数组解析Bug)
+// 多功能生成器 (Multifunction Generator) v4.7.2
+// 发行定位: 严谨专业·图鉴与事件生成引擎 (修复移动端地址栏遮挡与滚动问题)
 // 运行环境：SillyTavern + TavernHelper
 // ============================================
 
@@ -102,7 +102,6 @@
     const safeRun = typeof errorCatched === 'function' ? errorCatched : (fn) => async (...args) => { try { return await fn(...args); } catch (e) { log(e.message, 'error'); } };
     function saveStorage(key, data) { try { hostWindow.localStorage.setItem(key, JSON.stringify(data)); } catch (e) { } }
 
-    // 修复后的 loadStorage 函数，完美兼容 Array 与 Object 类型
     function loadStorage(key, defaultVal) {
         try {
             const r = hostWindow.localStorage.getItem(key);
@@ -240,11 +239,11 @@
     function buildBaseModal(id, zIndex = 9999999) {
         const m = hostWindow.document.createElement('div'); m.id = 'multigen-' + id;
         m.style.cssText = `
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100vh;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100vh; height: 100dvh;
             background: rgba(0,0,0,0.75); backdrop-filter: blur(5px); z-index: ${zIndex};
             display: flex; align-items: center; justify-content: center;
             font-family: system-ui, -apple-system, sans-serif;
-            overflow-y: hidden; touch-action: pan-y;
+            overflow: hidden; touch-action: pan-y;
         `;
         return m;
     }
@@ -259,11 +258,7 @@
             .mg-theme-dark  { --bg: #1e293b; --bg-sec: #0f172a; --text: #ffffff; --border: #334155; --primary: #3b82f6; --primary-hover: #2563eb; --ph-color: #cbd5e1; }
 
             .mg-theme-light .mg-custom-append::-webkit-input-placeholder { color: #171717 !important; font-weight: bold; opacity: 0.6; }
-            .mg-theme-light .mg-custom-append::-moz-placeholder { color: #171717 !important; font-weight: bold; opacity: 0.6; }
-            .mg-theme-light .mg-custom-append:-ms-input-placeholder { color: #171717 !important; font-weight: bold; opacity: 0.6; }
             .mg-theme-dark .mg-custom-append::-webkit-input-placeholder { color: #f1f5f9 !important; font-weight: bold; opacity: 0.6; }
-            .mg-theme-dark .mg-custom-append::-moz-placeholder { color: #f1f5f9 !important; font-weight: bold; opacity: 0.6; }
-            .mg-theme-dark .mg-custom-append:-ms-input-placeholder { color: #f1f5f9 !important; font-weight: bold; opacity: 0.6; }
 
             .mg-container { background: var(--bg); color: var(--text); border-radius: 16px; width: 92%; max-width: 960px; height: 86vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.5); animation: mg-fadeIn 0.2s ease-out; overflow: hidden; }
             .mg-header { padding: 16px 24px; background: var(--bg-sec); border-bottom: 2px solid var(--primary); display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 18px; }
@@ -303,8 +298,9 @@
             .wb-tree-head { display:flex; align-items:center; padding:12px 14px; background:var(--bg-sec); cursor:pointer; font-size:15px; }
             .wb-tree-body { padding:14px; border-top:1px solid var(--border); background:var(--bg); }
 
+            /* 适配手机端与动态视口，彻底解决地址栏底端遮挡与按钮出界的问题 */
             @media (max-width: 850px) {
-                .mg-container { width: 100%; height: 100vh; border-radius: 0; }
+                .mg-container { width: 100%; height: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
                 .mg-body { flex-direction: column; }
                 .mg-sidebar { width: 100%; height: auto; display: flex; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); }
                 .mg-nav-item { border-left: none; border-bottom: 4px solid transparent; white-space: nowrap; flex: 0 0 auto;}
@@ -340,7 +336,7 @@
         let savedScrollTop = scrollArea ? scrollArea.scrollTop : 0;
 
         if (!container) {
-            mainModal.innerHTML = `<div class="mg-container ${theme}"><div class="mg-header"><div>🪄 多功能生成器 <span style="font-size:12px;opacity:0.6;font-weight:normal">v4.7.1</span></div><div class="mg-close" id="mg-close-main">×</div></div><div class="mg-body"><div class="mg-sidebar">${navHtml}</div><div class="mg-content mg-scroll" id="mg-content-area">${contentHtml}</div></div></div>`;
+            mainModal.innerHTML = `<div class="mg-container ${theme}"><div class="mg-header"><div>🪄 多功能生成器 <span style="font-size:12px;opacity:0.6;font-weight:normal">v4.7.2</span></div><div class="mg-close" id="mg-close-main">×</div></div><div class="mg-body"><div class="mg-sidebar">${navHtml}</div><div class="mg-content mg-scroll" id="mg-content-area">${contentHtml}</div></div></div>`;
             mainModal.querySelector('#mg-close-main').onclick = () => { mainModal.remove(); mainModal = null; };
         } else {
             container.className = `mg-container ${theme}`;
@@ -445,7 +441,7 @@
             let toolBtns = isLocked ? `<button class="mg-btn-outline _builder_unlock" data-gid="${g.id}" style="padding:6px 12px; color:var(--primary); font-weight:bold;">🔒 编辑</button>` : `<button class="mg-btn-outline _builder_edit" data-gid="${g.id}" style="padding:6px 12px;">⚙️ 编辑</button>${g.isDefault ? `<button class="mg-btn-outline _builder_reset" data-gid="${g.id}" style="padding:6px 12px; color:#ef4444;" title="恢复默认">↺ 恢复默认</button>` : `<button class="mg-btn-outline _builder_del" data-gid="${g.id}" style="padding:6px 12px; color:#ef4444;">🗑️ 删除</button>`}`;
             return `<div class="mg-block mg-gen-item" draggable="true" data-gid="${g.id}"><div style="background:var(--bg); border:none; display:flex; flex-direction:column; gap:12px;"><div style="display:flex; align-items:center; gap:10px;"><span style="cursor:grab; opacity:0.5; font-size:18px; padding-right:10px;">≡</span><span style="font-size:20px;">${g.icon}</span><b style="font-size:16px; color:var(--text);">${g.name}</b><span class="mg-desc">(${g.tag})</span>${isLocked ? '' : '<span style="font-size:12px; background:rgba(16,185,129,0.1); color:#10b981; padding:2px 6px; border-radius:4px; font-weight:bold;">已修改</span>'}</div><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="mg-btn-outline _builder_exp" data-gid="${g.id}" style="padding:6px 12px;">📤 导出</button>${toolBtns}</div></div></div>`;
         }).join('');
-        return `<h2 style="margin-top:0">⚒️ 生成器工坊</h2><p style="opacity:0.8; font-size:14px; margin-bottom:20px;">在此创建、编辑和管理自定义生成器。</p><div style="display:flex; gap:12px; margin-bottom:20px;"><button class="mg-btn" id="builder-add" style="flex:1; font-size:16px;">✨ 新建生成器</button><button class="mg-btn mg-btn-outline" id="builder-import" style="flex:1;">📥 导入生成器</button></div><hr style="border:none; border-top:1px dashed var(--border); margin-bottom:20px;"><div id="builder-list" style="display:flex; flex-direction:column; gap:10px;"><p style="opacity:0.6; font-size:13px; text-align:center;">（拖拽 ≡ 图标以重排序）</p>${listHtml}</div>`;
+        return `<h2 style="margin-top:0">⚒️ 生成器工坊</h2><p style="opacity:0.8; font-size:14px; margin-bottom:20px;">在此创建、编辑和管理自定义生成器。</p><div style="display:flex; gap:12px; margin-bottom:20px;"><button class="mg-btn" id="builder-add" style="flex:1; font-size:16px;">✨ 新建生成器</button><button class="mg-btn mg-btn-outline" id="builder-import" style="flex:1;">📥 导入生成器</button></div><hr style="border:none; border-top:1px dashed var(--border); margin-bottom:20px;"><div id="builder-list" style="display:flex; flex-direction:column; gap:10px;"><p style="opacity:0.6; font-size:13px; text-align:center;">（拖拽 ≡ 图标以重排序）</p>${listHtml}</div><div style="height: 60px;"></div>`;
     }
 
     function bindBuilderEvents() {
@@ -458,10 +454,10 @@
             iModal.innerHTML = `
                 <div class="mg-container ${theme}" style="max-width:600px; height:auto; max-height:85vh; box-shadow:0 10px 40px rgba(0,0,0,0.6);">
                     <div class="mg-header"><div>📥 导入代码片段</div><div class="mg-close" id="imp-close">×</div></div>
-                    <div class="mg-body" style="flex-direction:column; padding:20px; overflow-y:auto;">
+                    <div class="mg-body mg-scroll" style="flex-direction:column; padding:20px; overflow-y:auto;">
                         <p style="margin-top:0; font-size:14px; opacity:0.8; margin-bottom:12px;">请在下方粘贴生成器的 JSON 代码片段：</p>
-                        <textarea id="imp-text" class="mg-input mg-scroll" style="flex:1; min-height: 220px; resize:vertical; font-family:monospace; line-height: 1.5;" placeholder='{"name": "...", "tag": "...", "fields": [...]}'></textarea>
-                        <div style="text-align:right; margin-top:20px; display:flex; justify-content:flex-end; gap:16px;">
+                        <textarea id="imp-text" class="mg-input mg-scroll" style="flex:1 0 200px; min-height: 220px; resize:vertical; font-family:monospace; line-height: 1.5;" placeholder='{"name": "...", "tag": "...", "fields": [...]}'></textarea>
+                        <div style="text-align:right; margin-top:20px; display:flex; justify-content:flex-end; gap:16px; margin-bottom: 20px;">
                             <button class="mg-btn mg-btn-outline" id="imp-cancel">取消</button>
                             <button class="mg-btn" id="imp-ok" style="padding:12px 30px;">📥 确认导入</button>
                         </div>
@@ -516,7 +512,7 @@
     function openBuilderEditor(genObj) {
         const isNew = !genObj; let cGen = isNew ? { id: uuidGen(), name: '', tag: '', icon: '', sys: '', namePrompt: '为该对象生成一个合适的名字，可附带别称（用括号包裹）。', isDefault: false, fields: [] } : JSON.parse(JSON.stringify(genObj));
         let theme = AppState.globalCfg.uiTheme === 'dark' ? 'mg-theme-dark' : 'mg-theme-light'; let bModal = buildBaseModal('b_edit');
-        bModal.innerHTML = `<div class="mg-container ${theme}" style="max-width:800px; height:90vh; box-shadow:0 0 100px rgba(0,0,0,0.8);"><div class="mg-header"><div>${isNew ? '✨ 新建生成器' : '⚙️ 编辑生成器'}</div><div class="mg-close" id="bedit-close">×</div></div><div class="mg-body" style="flex-direction:column; padding:20px; overflow-y:auto;" id="bedit-scroll"><div class="mg-twocol"><div><label>生成器名称</label><input id="be-name" class="mg-input" value="${cGen.name}" placeholder="例如：功法生成器"></div><div><label>提取标签</label><input id="be-tag" class="mg-input" value="${cGen.tag}" placeholder="例如：功法"></div><div><label>图标</label><input id="be-icon" class="mg-input" value="${cGen.icon}" placeholder="例如：📜"></div></div><label>System Prompt</label><textarea id="be-sys" class="mg-input mg-scroll" rows="8" placeholder="填写发给该生成器的基础规则与系统设定..." style="resize:vertical; min-height:120px; font-family:inherit;">${cGen.sys}</textarea><hr style="border:none; border-top:1px dashed var(--border); margin:12px 0;"><label>【固定首项】“名字”字段生成规则</label><textarea id="be-namepmt" class="mg-input" rows="2">${cGen.namePrompt || ''}</textarea><div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:10px; margin-bottom:10px;"><h4 style="margin:0; color:var(--text);">生成字段 <span style="font-size:12px; font-weight:normal; opacity:0.8;">(禁止使用“名字”或“关键词”作为字段名)</span></h4><span style="font-size:12px; opacity:0.6;">(拖拽 ≡ 图标调整顺序)</span></div><div id="be-fields-list"></div><button class="mg-btn mg-btn-outline" id="be-add-field" style="width:100%; border-style:dashed; margin-bottom:20px;">+ 新增字段</button><div style="flex:1;"></div><div style="display:flex; justify-content:flex-end; gap:15px; margin-top:20px; border-top:1px solid var(--border); padding-top:20px;"><button class="mg-btn mg-btn-outline" id="be-cancel">取消</button><button class="mg-btn" id="be-save" style="padding:10px 40px;">💾 保存</button></div></div></div>`;
+        bModal.innerHTML = `<div class="mg-container ${theme}" style="max-width:800px; height:90vh; max-height: 90dvh; box-shadow:0 0 100px rgba(0,0,0,0.8);"><div class="mg-header"><div>${isNew ? '✨ 新建生成器' : '⚙️ 编辑生成器'}</div><div class="mg-close" id="bedit-close">×</div></div><div class="mg-body mg-scroll" style="flex-direction:column; padding:20px; overflow-y:auto;" id="bedit-scroll"><div class="mg-twocol"><div><label>生成器名称</label><input id="be-name" class="mg-input" value="${cGen.name}" placeholder="例如：功法生成器"></div><div><label>提取标签</label><input id="be-tag" class="mg-input" value="${cGen.tag}" placeholder="例如：功法"></div><div><label>图标</label><input id="be-icon" class="mg-input" value="${cGen.icon}" placeholder="例如：📜"></div></div><label>System Prompt</label><textarea id="be-sys" class="mg-input mg-scroll" rows="8" placeholder="填写发给该生成器的基础规则与系统设定..." style="resize:vertical; min-height:120px; font-family:inherit;">${cGen.sys}</textarea><hr style="border:none; border-top:1px dashed var(--border); margin:12px 0;"><label>【固定首项】“名字”字段生成规则</label><textarea id="be-namepmt" class="mg-input" rows="2">${cGen.namePrompt || ''}</textarea><div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:10px; margin-bottom:10px;"><h4 style="margin:0; color:var(--text);">生成字段 <span style="font-size:12px; font-weight:normal; opacity:0.8;">(禁止使用“名字”或“关键词”作为字段名)</span></h4><span style="font-size:12px; opacity:0.6;">(拖拽 ≡ 图标调整顺序)</span></div><div id="be-fields-list"></div><button class="mg-btn mg-btn-outline" id="be-add-field" style="width:100%; border-style:dashed; margin-bottom:20px;">+ 新增字段</button><div style="flex:1;"></div><div style="display:flex; justify-content:flex-end; gap:15px; margin-top:20px; border-top:1px solid var(--border); padding-top:20px; padding-bottom: 20px;"><button class="mg-btn mg-btn-outline" id="be-cancel">取消</button><button class="mg-btn" id="be-save" style="padding:10px 40px;">💾 保存</button></div></div></div>`;
         hostWindow.document.body.appendChild(bModal);
         function syncDOM() { cGen.fields = Array.from(bModal.querySelectorAll('.mg-field-row')).map(row => ({ name: row.querySelector('._bf_name').value.trim(), pmt: row.querySelector('._bf_pmt').value.trim() })); }
         function renderFields() { const wrap = bModal.querySelector('#be-fields-list'); const sc = bModal.querySelector('#bedit-scroll'); const savedScroll = sc ? sc.scrollTop : 0; wrap.innerHTML = cGen.fields.map((f, i) => `<div class="mg-field-row" draggable="true" data-bidx="${i}" style="padding:12px; background:var(--bg-sec); border-radius:6px; margin-bottom:10px; border:1px solid var(--border);"><div style="display:flex; gap:10px; align-items:flex-start;"><span style="cursor:grab; opacity:0.5; margin-top:12px; font-size:18px;">≡</span><div style="flex:1; display:flex; flex-direction:column; gap:8px;"><input class="mg-input _bf_name" style="margin:0; font-weight:bold;" placeholder="字段名称" value="${f.name}"><textarea class="mg-input _bf_pmt" rows="2" style="margin:0; resize:vertical;" placeholder="撰写该节点的格式逻辑限制...">${f.pmt}</textarea></div><button class="mg-btn-outline _del_bf" title="删除该项" style="padding:6px 12px; color:#ef4444; border:none; margin-top:8px;">🗑️</button></div></div>`).join(''); wrap.querySelectorAll('._del_bf').forEach(btn => { btn.onclick = (e) => { syncDOM(); const i = parseInt(e.target.closest('.mg-field-row').getAttribute('data-bidx')); cGen.fields.splice(i, 1); renderFields(); } }); let dragIdx = null; wrap.querySelectorAll('.mg-field-row').forEach(row => { row.ondragstart = (e) => { syncDOM(); dragIdx = parseInt(row.getAttribute('data-bidx')); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", dragIdx); setTimeout(() => row.style.opacity = '0.5', 0); }; row.ondragover = (e) => e.preventDefault(); row.ondragenter = (e) => { e.preventDefault(); row.style.border = "2px dashed var(--primary)"; }; row.ondragleave = (e) => { row.style.border = "1px solid var(--border)"; }; row.ondrop = (e) => { e.preventDefault(); row.style.border = "1px solid var(--border)"; let tIdx = parseInt(row.getAttribute('data-bidx')); if (dragIdx !== null && dragIdx !== tIdx) { let item = cGen.fields.splice(dragIdx, 1)[0]; cGen.fields.splice(tIdx, 0, item); renderFields(); } }; row.ondragend = () => { row.style.opacity = '1'; }; }); if (sc) sc.scrollTop = savedScroll; }
@@ -854,16 +850,16 @@
         previewModal.innerHTML = `
         <div class="mg-container ${theme}">
             <div class="mg-header"><div>提示词预览文本</div><div class="mg-close" id="pmt-close">×</div></div>
-            <div class="mg-body" style="flex-direction:column; padding:20px; overflow:hidden;">
-                <p style="margin-top:0; font-size:14px; opacity:0.8; margin-bottom:12px;">以下内容将发送给 AI，您可以在此编辑和调整：</p>
-                <div style="position:relative; flex:1; display:flex; width:100%; border: 1px solid var(--border); border-radius: 8px; overflow:hidden; background: var(--bg);">
+            <div class="mg-body mg-scroll" style="flex-direction:column; padding:20px; padding-bottom: max(20px, env(safe-area-inset-bottom)); overflow-y:auto; overflow-x:hidden;">
+                <p style="margin-top:0; font-size:14px; opacity:0.8; margin-bottom:12px; flex-shrink:0;">以下内容将发送给 AI，您可以在此编辑和调整：</p>
+                <div style="position:relative; flex: 1 0 150px; display:flex; width:100%; border: 1px solid var(--border); border-radius: 8px; overflow:hidden; background: var(--bg);">
                     <textarea id="pmt-text" class="pmt-scroll" style="flex:1; width:100%; resize:none; border:none; padding:12px; padding-right:55px; font-family:monospace; line-height: 1.5; color:var(--text); background:transparent; font-size:14px; outline:none;">${finalPrompt}</textarea>
                     <div style="position:absolute; right:12px; bottom:15px; display:flex; flex-direction:column; gap:12px;">
                         <button id="pmt-up" class="mg-btn" style="padding:10px; border-radius:50%; font-size:14px; box-shadow:0 3px 8px rgba(0,0,0,0.3);" title="一键置顶">▲</button>
                         <button id="pmt-dn" class="mg-btn" style="padding:10px; border-radius:50%; font-size:14px; box-shadow:0 3px 8px rgba(0,0,0,0.3);" title="一键沉底">▼</button>
                     </div>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:12px; margin-top:16px;">
+                <div style="display:flex; flex-direction:column; gap:12px; margin-top:16px; flex-shrink:0;">
                     <div style="display:flex; align-items:center; gap:8px; justify-content:flex-end;">
                         <label style="font-size:13px; opacity:0.8; font-weight:bold;">临时生成模型:</label>
                         <select id="pmt-model-select" class="mg-input" style="margin:0; padding:6px 10px; width:auto; max-width:200px; font-size:13px;">
@@ -871,7 +867,7 @@
                         </select>
                         <button id="pmt-fetch-models" class="mg-btn-outline" style="padding:4px 8px; font-size:12px;" title="拉取当前 API 可用模型列表">🔄</button>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding-bottom:10px;">
                         <button class="mg-btn mg-btn-outline" id="pmt-history" style="padding:10px 16px; font-size:14px;">🕰️ 历史记录</button>
                         <button class="mg-btn" id="pmt-run" style="padding:10px 24px; font-size:14px; white-space:nowrap;">✨ 确认并发送</button>
                     </div>
@@ -935,20 +931,20 @@
         historyModal.innerHTML = `
         <div class="mg-container ${theme}" style="max-width: 800px; height: 80vh;">
             <div class="mg-header"><div>🕰️ 缓存记录 (<span id="h-counter"></span>)</div><div class="mg-close" id="h-close">×</div></div>
-            <div class="mg-body" style="flex-direction:column; padding:20px;">
-                <div style="font-size:13px; opacity:0.8; margin-bottom:8px; display:flex; justify-content:space-between;">
+            <div class="mg-body mg-scroll" style="flex-direction:column; padding:20px; padding-bottom: max(20px, env(safe-area-inset-bottom)); overflow-y:auto; overflow-x:hidden;">
+                <div style="font-size:13px; opacity:0.8; margin-bottom:8px; display:flex; justify-content:space-between; flex-shrink:0;">
                     <span>原生成器：<b id="h-gen-name"></b></span>
                     <span>生成时间：<span id="h-time"></span></span>
                 </div>
-                <textarea id="h-text" class="mg-input mg-scroll" style="flex:1; resize:none; font-family:monospace; line-height:1.5; font-size:14px;" readonly></textarea>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+                <textarea id="h-text" class="mg-input mg-scroll" style="flex: 1 0 150px; resize:none; font-family:monospace; line-height:1.5; font-size:14px;" readonly></textarea>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-shrink:0; padding-bottom:10px;">
                     <div style="display:flex; gap:8px;">
                         <button class="mg-btn-outline" id="h-prev" style="padding:10px; font-weight:normal;">◀ 上一条</button>
                         <button class="mg-btn-outline" id="h-next" style="padding:10px; font-weight:normal;">下一条 ▶</button>
                     </div>
                     <div style="display:flex; gap:12px;">
                         <button class="mg-btn-outline" id="h-del" style="color:#ef4444; border-color:transparent; padding:10px;">🗑️ 删除</button>
-                        <button class="mg-btn" id="h-apply" style="padding:10px 20px;">📝 写入处理结果</button>
+                        <button class="mg-btn" id="h-apply" style="padding:10px 20px;">📝 写入处理</button>
                     </div>
                 </div>
             </div>
@@ -1016,7 +1012,7 @@
         if (cards.length === 0) { log("未检测到 XML 闭合标签，已使用容错机制载入原始文本", "warning"); cards.push({ type: gen.tag, pureName: '未格式化片段', parsedFields: {}, rawTextFallback: aiResponseText }); }
 
         const resModal = buildBaseModal('res'); const theme = AppState.globalCfg.uiTheme === 'dark' ? 'mg-theme-dark' : 'mg-theme-light'; const savedFormat = loadStorage(STORAGE_KEY_FMT, 'yaml');
-        resModal.innerHTML = `<div class="mg-container ${theme}"><div class="mg-header"><div>📥 处理结果 (${cards.length} 项)</div><div style="display:flex; align-items:center;"><button id="res-regen" class="mg-btn mg-btn-outline" style="padding:6px 14px; font-size:14px; font-weight:normal;">🔄 重新生成</button><div class="mg-close" id="res-close">×</div></div></div><div class="mg-body" style="padding:20px; overflow-y:auto; flex-direction:column; gap:20px;" id="res-cards-container"></div></div>`;
+        resModal.innerHTML = `<div class="mg-container ${theme}"><div class="mg-header"><div>📥 处理结果 (${cards.length} 项)</div><div style="display:flex; align-items:center;"><button id="res-regen" class="mg-btn mg-btn-outline" style="padding:6px 14px; font-size:14px; font-weight:normal;">🔄 重新生成</button><div class="mg-close" id="res-close">×</div></div></div><div class="mg-body mg-scroll" style="padding:20px; overflow-y:auto; flex-direction:column; gap:20px;" id="res-cards-container"></div></div>`;
         const container = resModal.querySelector('#res-cards-container');
 
         let validTargets = new Set();
