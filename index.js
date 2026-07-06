@@ -1,10 +1,10 @@
 // ============================================
 // 多功能生成器 (Multifunction Generator) v4.7.2
-// 发行定位: 严谨专业·图鉴与事件生成引擎 (修复移动端地址栏遮挡与滚动问题)
+// 发行定位: 严谨专业·图鉴与事件生成引擎 (修复移动端地址栏遮挡与滚动问题1)
 // 运行环境：SillyTavern + TavernHelper
 // ============================================
 
-(async function () {
+(async function () {(异步 函数 () {
     'use strict';
 
     const hostWindow = window.parent;
